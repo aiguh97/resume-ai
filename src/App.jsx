@@ -15,23 +15,35 @@ const App = () => {
 
   const dispatch = useDispatch()
 
-  const getUserData = async () => {
-    const token = localStorage.getItem('token')
-    try {
-      if(token){
-        const { data } = await api.get('/api/users/data', {headers: {Authorization: token}})
-        if(data.user){
-          dispatch(login({token, user: data.user}))
-        }
-        dispatch(setLoading(false))
-      }else{
-        dispatch(setLoading(false))
-      }
-    } catch (error) {
-      dispatch(setLoading(false))
-      console.log(error.message)
-    }
+const getUserData = async () => {
+  const token = localStorage.getItem('token')
+
+  if (!token) {
+    dispatch(setLoading(false))
+    return
   }
+
+  try {
+    const { data } = await api.get(
+      '/api/users/data',
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    if (data?.user) {
+      dispatch(login({ token, user: data.user }))
+    }
+  } catch (error) {
+    console.log(error.response?.status)
+    // token invalid → logout
+    localStorage.removeItem('token')
+  } finally {
+    dispatch(setLoading(false))
+  }
+}
 
   useEffect(()=>{
     getUserData()
